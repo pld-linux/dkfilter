@@ -1,12 +1,11 @@
 # TODO:
 # - init script, whole service stuff
-# - files section....
 #
 %include	/usr/lib/rpm/macros.perl
 Summary:	dkfilter is an SMTP-proxy designed for Postfix
 Name:		dkfilter
 Version:	0.9
-Release:	0.3
+Release:	0.8
 License:	GPL v2
 Group:		Daemons
 Source0:	http://jason.long.name/dkfilter/%{name}-%{version}.tar.gz
@@ -52,17 +51,19 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc AUTHORS ChangeLog Mail-DomainKeys.README NEWS smtpprox* TODO
-#/etc/rc.d/init.d/dkfilter
-#%{_prefix}/local/dkfilter/dkfilter.in
-#%{_prefix}/local/dkfilter/dkfilter.out
-#%{_prefix}/local/dkfilter/DKMessage.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys/Key/Public.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys/Key/Private.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys/Policy.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys/Key.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys/Signature.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys/Header.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys/Message.pm
-#%{_prefix}/local/dkfilter/Mail/DomainKeys.pm
-#%{_prefix}/local/dkfilter/MSDW/SMTP/Client.pm
-#%{_prefix}/local/dkfilter/MSDW/SMTP/Server.pm
+%attr(755,root,root) %{_bindir}/*
+%{perl_vendorlib}/*.pm
+%dir %{perl_vendorlib}/MSDW
+%dir %{perl_vendorlib}/MSDW/SMTP
+%{perl_vendorlib}/MSDW/SMTP/*.pm
+%{perl_vendorlib}/Mail/*.pm
+%dir %{perl_vendorlib}/Mail/DKIM
+%{perl_vendorlib}/Mail/DKIM/*.pm
+%dir %{perl_vendorlib}/Mail/DKIM/Algorithm
+%{perl_vendorlib}/Mail/DKIM/Algorithm/*.pm
+%dir %{perl_vendorlib}/Mail/DKIM/Canonicalization
+%{perl_vendorlib}/Mail/DKIM/Canonicalization/*.pm
+%dir %{perl_vendorlib}/Mail/DomainKeys
+%{perl_vendorlib}/Mail/DomainKeys/*.pm
+%dir %{perl_vendorlib}/Mail/DomainKeys/Key
+%{perl_vendorlib}/Mail/DomainKeys/Key/*.pm
