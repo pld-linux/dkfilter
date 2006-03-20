@@ -1,11 +1,21 @@
+# TODO:
+# - init script, whole service stuff
+# - files section....
+#
+%include	/usr/lib/rpm/macros.perl
 Summary:	dkfilter is an SMTP-proxy designed for Postfix
 Name:		dkfilter
 Version:	0.9
-Release:	0.2
+Release:	0.3
 License:	GPL v2
 Group:		Daemons
 Source0:	http://jason.long.name/dkfilter/%{name}-%{version}.tar.gz
 # Source0-md5:	3100af34fd00df4d80f07d3533cdf0eb
+Patch0:		%{name}-perllib.patch
+BuildRequires:	autoconf
+BuildRequires:	automake
+BuildRequires:	perl-devel >= 1:5.8.0
+BuildRequires:	rpm-perlprov >= 4.1-13
 URL:		http://jason.long.name/dkfilter/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -19,9 +29,14 @@ content filters.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
-%configure
+%{__aclocal}
+%{__autoconf}
+%{__automake}
+%configure \
+	--libdir=%{perl_vendorlib}
 
 %{__make}
 
