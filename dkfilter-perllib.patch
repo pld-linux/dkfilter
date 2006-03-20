@@ -1,0 +1,11 @@
+--- ./configure.ac.org	2005-07-14 22:48:48.000000000 +0200
++++ ./configure.ac	2006-03-20 17:13:17.747972536 +0100
+@@ -6,7 +6,7 @@
+ AC_PATH_PROG(PERL, perl, perl)
+ 
+ dnl Installation locations
+-perllibdir='${prefix}/lib'
++perllibdir='${libdir}'
+ AC_SUBST(perllibdir)
+ 
+ AC_OUTPUT([
