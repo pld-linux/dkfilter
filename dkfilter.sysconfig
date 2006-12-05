@@ -1,0 +1,13 @@
+# Customized settings for dkfilter
+
+# Define nice level for dkfilter & config 
+SERVICE_RUN_NICE_LEVEL="+5"
+
+START_INBOUND=yes
+START_OUTBOUND=yes
+
+INBOUND_IN=127.0.0.1:10026
+INBOUND_OUT=127.0.0.1:10024	
+
+OUTBOUND_IN=127.0.0.1:10027
+OUTBOUND_OUT=127.0.0.1:10024	

@@ -1,0 +1,259 @@
+diff -urN dkfilter-0.11.orig/scripts/dkfilter.out dkfilter-0.11/scripts/dkfilter.out
+--- dkfilter-0.11.orig/scripts/dkfilter.out	2006-09-21 16:21:36.000000000 +0200
++++ dkfilter-0.11/scripts/dkfilter.out	2006-12-05 20:43:15.000000000 +0100
+@@ -18,6 +18,8 @@
+ #   GNU General Public License for more details.
+ #
+ # Written by Bennett Todd <bet@rahul.net>
++# Support for multiple keys and configuration file added by
++#         Xavier Perseguers <xavier.perseguers@a3.epfl.ch>
+ 
+ use strict;
+ use warnings;
+@@ -26,6 +28,7 @@
+ use Pod::Usage;
+ use IO::File;
+ use Sys::Syslog;
++use AppConfig::File;
+ 
+ use DKMessage;
+ use MySmtpServer;
+@@ -35,11 +38,8 @@
+ 
+ my $reject_fail = 0;  # not actually used in this filter
+ my $reject_error = 0;
+-my $keyfile;
+-my $selector;
+-my $domain_arg;
+-my $method = "simple";
+ my $headers = 0;
++my $configfile;
+ my $setuser;
+ my $setgroup;
+ my $daemonize;
+@@ -50,10 +50,7 @@
+ 		"reject-fail" => \$reject_fail,
+ 		"reject-error" => \$reject_error,
+ 		"hostname=s" => \$hostname,
+-		"keyfile=s" => \$keyfile,
+-		"selector=s" => \$selector,
+-		"domain=s" => \$domain_arg,
+-		"method=s" => \$method,
++		"configfile=s" => \$configfile,
+ 		"headers" => \$headers,
+ 		"user=s" => \$setuser,
+ 		"group=s" => \$setgroup,
+@@ -73,32 +70,88 @@
+ 	pod2usage("Error: source or destination port is missing");
+ }
+ 
+-unless (defined $keyfile)
++unless (defined $configfile)
+ {
+-	pod2usage("Error: no keyfile specified");
++	pod2usage("Error: no configfile specified");
+ }
+-unless (-r $keyfile)
++unless (-r $configfile)
+ {
+-	pod2usage("Error: cannot read keyfile $keyfile");
++	pod2usage("Error: cannot read configfile $configfile");
+ }
+-unless (defined $selector)
++
++# Parse the configuration file
++
++my $state = AppConfig::State->new();
++
++$state->define(
++	'domain_name', {
++		ARGCOUNT => AppConfig::ARGCOUNT_LIST
++	},
++	'domain_selector', {
++		ARGCOUNT => AppConfig::ARGCOUNT_LIST
++	},
++	'domain_method', {
++		ARGCOUNT => AppConfig::ARGCOUNT_LIST,
++		VALIDATE => \&check_method
++	},
++	'domain_private_key', {
++		ARGCOUNT => AppConfig::ARGCOUNT_LIST,
++		VALIDATE => \&check_private_key
++	}
++);
++
++sub check_method {
++	my $var  = shift;
++	my $val  = shift;
++
++	return ($val eq "simple" || $val eq "nofws") ? 1 : 0;
++}
++
++sub check_private_key {
++	my $var   = shift;
++	my $val   = shift;
++
++	return (-r $val) ? 1 : 0;
++}
++
++my $config = AppConfig::File->new($state);
++$config->parse($configfile);
++
++my $domains    = $state->get('domain_name');
++my $_methods   = $state->get('domain_method');
++my $_selectors = $state->get('domain_selector');
++my $_keys      = $state->get('domain_private_key');
++
++unless ( scalar @$domains == scalar @$_methods )
+ {
+-	pod2usage("Error: selector not specified");
++	pod2usage("Error: number of methods is different than number of domains");
+ }
+-unless (defined $domain_arg)
++unless ( scalar @$domains == scalar @$_selectors )
+ {
+-	pod2usage("Error: domain not specified");
++	pod2usage("Error: number of selectors is different than number of domains");
+ }
+-my @domains = split(/,\s*/, $domain_arg);
+-unless (@domains)
++unless ( scalar @$domains == scalar @$_keys )
+ {
+-	pod2usage("Error: domain not specified");
++	pod2usage("Error: number of private keys is different than number of domains");
+ }
+-unless ($method eq "simple" || $method eq "nofws")
++
++my %methods;
++my %selectors;
++my %keys;
++
++for ( my $i = 0; $i < scalar @$domains; $i++ )
+ {
+-	die "Error: invalid method; must be simple or nofws\n";
++	$methods{ @$domains[$i] } = @$_methods[$i];
++	$selectors{ @$domains[$i] } = @$_selectors[$i];
++	$keys{ @$domains[$i] } = @$_keys[$i];
+ }
+ 
++# Compare number of key files and number of domains
++# If there is only one key file, each domain will use
++# the same key (dkfilter original version). Otherwise
++# there should be as many key file as domain definitions.
++# If all goes well, create a hash with a key for each domain.
++
+ use base "MySmtpProxyServer";
+ main->run(
+ 		host => $srcaddr,
+@@ -166,7 +219,7 @@
+ 		{
+ 			while ($domain)
+ 			{
+-				if (grep { lc($_) eq $domain } @domains)
++				if (grep { lc($_) eq $domain } @$domains)
+ 				{
+ 					last;
+ 				}
+@@ -177,14 +230,14 @@
+ 		unless ($domain)
+ 		{
+ 			# message has no senderdomain
+-			$domain = $domains[0];
++			$domain = @$domains[0];
+ 		}
+ 
+ 		$result = $mess->sign(
+-			Method => $method,
+-			Selector => $selector,
++			Method => $methods{ $domain },
++			Selector => $selectors{ $domain },
+ 			Domain => $domain,
+-			KeyFile => $keyfile,
++			KeyFile => $keys{ $domain },
+ 			Headers => $headers
+ 			);
+ 		$result_detail = $mess->result_detail;
+@@ -246,10 +299,7 @@
+   dkfilter.out [options] listen.addr:port talk.addr:port
+     options:
+       --reject-error
+-      --keyfile=filename
+-      --selector=SELECTOR
+-      --domain=DOMAIN
+-      --method=simple|nofws
++      --configfile=filename
+       --headers
+       --user=USER
+       --group=GROUP
+@@ -259,6 +309,24 @@
+   dkfilter.out --help
+     to see a full description of the various options
+ 
++  Format of the configuration file:
++
++  # ------------------------------------------
++  # domain 1
++  [domain]
++  name        = domain.tld
++  method      = METHOD
++  selector    = SELECTOR
++  private_key = FILENAME
++
++  # domain 2
++  [domain]
++  name        = otherdomain.tld
++  method      = METHOD
++  selector    = SELECTOR
++  private_key = FILENAME
++  # ------------------------------------------
++
+ =head1 OPTIONS
+ 
+ =over
+@@ -274,17 +342,18 @@
+ 
+ The most common error is a message parse error.
+ 
+-=item B<--keyfile=FILENAME>
++=item B<--configfile=FILENAME>
+ 
+ This is a required argument. Use it to specify the filename containing
+-the private key used in signing outgoing messages.
++the configuration of domains and private keys used in signing outgoing
++messages.
+ 
+-=item B<--selector=SELECTOR>
++=item B<SELECTOR>
+ 
+ This is a required argument. Use it to specify the name of the key
+ selector.
+ 
+-=item B<--domain=DOMAIN>
++=item B<DOMAIN>
+ 
+ This is a required argument. Use it to specify what domain(s) emails
+ are signed for. If you want to sign for multiple domains, specify the
+@@ -293,11 +362,10 @@
+ specified in this argument. If it sees a match, it will sign the message
+ using the matching domain.
+ 
+-=item B<--method=simple|nofws>
++=item B<METHOD>
+ 
+ This option specifies the canonicalization algorithm to use for signing
+-messages. Specify either C<simple> or C<nofws>. If not specified,
+-the default is C<simple>.
++messages. Specify either C<simple> or C<nofws>.
+ 
+ =item B<--headers>
+ 
+@@ -335,7 +403,7 @@
+ 
+ =head1 EXAMPLE
+ 
+-  dkfilter.out --keyfile=private.key --selector=sydney \
+-          --domain=example.org 127.0.0.1:10027 127.0.0.1:10028
++  dkfilter.out --configfile=/etc/dkfilter.conf \
++          127.0.0.1:10027 127.0.0.1:10028
+ 
+ =cut
