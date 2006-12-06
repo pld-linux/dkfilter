@@ -19,10 +19,6 @@ Source4:	%{name}-example-private.key
 Patch0:		%{name}-perllib.patch
 Patch1:		%{name}-config_file.patch
 URL:		http://jason.long.name/dkfilter/
-Requires(post,preun):	/sbin/chkconfig
-Requires(postun):	/usr/sbin/userdel
-Requires(pre):	/bin/id
-Requires(pre):	/usr/sbin/useradd
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	perl-Crypt-OpenSSL-RSA
@@ -30,6 +26,15 @@ BuildRequires:	perl-MailTools
 BuildRequires:	perl-Net-Server >= 0.89
 BuildRequires:	perl-devel >= 1:5.8.0
 BuildRequires:	rpm-perlprov >= 4.1-13
+BuildRequires:	rpmbuild(macros) >= 1.202
+Requires(post,preun):	/sbin/chkconfig
+%if 0
+Requires(postun):	/usr/sbin/userdel
+Requires(pre):	/bin/id
+Requires(pre):	/bin/id
+Requires(pre):	/usr/sbin/useradd
+Provides:	user(dkfilter)
+%endif
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define         _sysconfdir     /etc/%{name}
@@ -80,9 +85,11 @@ install %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/ssl/private1.key
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%if 0
 %pre
-#what uid and gid shuld i use here ???
-#%%useradd -P %{name} -u 40 -s /bin/false -c "Dkfilter User" -g dkfilter dkfilter
+# what uid and gid shuld i use here ???
+%useradd -u 40 -s /bin/false -c "Dkfilter User" -g dkfilter dkfilter
+%endif
 
 %post
 /sbin/chkconfig --add dkfilter
@@ -90,14 +97,16 @@ rm -rf $RPM_BUILD_ROOT
 
 %preun
 if [ "$1" = "0" ]; then
-        %service dkfilter stop
-        /sbin/chkconfig --del dkfilter
+	%service dkfilter stop
+	/sbin/chkconfig --del dkfilter
 fi
 
+%if 0
 %postun
 if [ "$1" = "0" ]; then
-        %userremove dkfilter
+	%userremove dkfilter
 fi
+%endif
 
 %files
 %defattr(644,root,root,755)
