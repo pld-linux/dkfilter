@@ -23,6 +23,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	perl-Crypt-OpenSSL-RSA
 BuildRequires:	perl-MailTools
+BuildRequires:	perl-Net-DNS
 BuildRequires:	perl-Net-Server >= 0.89
 BuildRequires:	perl-devel >= 1:5.8.0
 BuildRequires:	rpm-perlprov >= 4.1-13
