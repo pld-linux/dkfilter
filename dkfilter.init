@@ -72,19 +72,27 @@ case "$1" in
 	;;
   stop)
 	# Stop daemons.
-	if [ -f /var/lock/subsys/dkfilter ]; then
-		msg_stopping dkfilter
-		busy
-		MSG="`tu stop dkfilter 2>&1`"
-		if [ $? -eq 0 ]; then
-			ok
+	if [ $START_INBOUND = "yes" ]; then
+		if [ -f /var/lock/subsys/dkfilter.in ]; then
+			msg_stopping dkfilter.in
+			busy
+			start-stop-daemon --stop --quiet --pidfile /var/run/dkfilter.in.pid && ok || fail
+			rm -f /var/run/dkfilter.in.pid
+			rm -f /var/lock/subsys/dkfilter.in
 		else
-			fail
-			echo "$MSG"
+			msg_not_running dkfilter.in
 		fi
-		rm -f /var/lock/subsys/dkfilter
-	else
-		msg_not_running dkfilter
+	fi
+	if [ $START_OUTBOUND = "yes" ]; then
+		if [ -f /var/lock/subsys/dkfilter.out ]; then
+			msg_stopping dkfilter.out
+			busy
+			start-stop-daemon --stop --quiet --pidfile /var/run/dkfilter.out.pid && ok || fail
+			rm -f /var/run/dkfilter.out.pid
+			rm -f /var/lock/subsys/dkfilter.out
+		else
+			msg_not_running dkfilter.out
+		fi
 	fi
 	;;
   restart)
@@ -93,7 +101,8 @@ case "$1" in
 	exit $?
 	;;
   status)
-	status master
+	status dkfilter.in
+	status dkfilter.out
 	exit $?
 	;;
   *)
