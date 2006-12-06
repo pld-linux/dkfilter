@@ -7,7 +7,7 @@ Summary:	dkfilter - an SMTP-proxy designed for Postfix
 Summary(pl):	dkfilter - proxy SMTP zaprojektowane dla Postfiksa
 Name:		dkfilter
 Version:	0.11
-Release:	0.8
+Release:	0.9
 License:	GPL v2
 Group:		Daemons
 Source0:	http://jason.long.name/dkfilter/%{name}-%{version}.tar.gz
@@ -15,9 +15,14 @@ Source0:	http://jason.long.name/dkfilter/%{name}-%{version}.tar.gz
 Source1:	%{name}.init
 Source2:	%{name}.sysconfig
 Source3:	%{name}.out.conf
+Source4:	%{name}-example-private.key
 Patch0:		%{name}-perllib.patch
 Patch1:		%{name}-config_file.patch
 URL:		http://jason.long.name/dkfilter/
+Requires(post,preun):	/sbin/chkconfig
+Requires(postun):	/usr/sbin/userdel
+Requires(pre):	/bin/id
+Requires(pre):	/usr/sbin/useradd
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	perl-Crypt-OpenSSL-RSA
@@ -70,9 +75,29 @@ install -d $RPM_BUILD_ROOT{%{_sysconfdir}/ssl,/etc/rc.d/init.d,/etc/sysconfig}
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/dkfilter
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/dkfilter
 install %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}.out.conf
+install %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/ssl/private1.key
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%pre
+#what uid and gid shuld i use here ???
+#%%useradd -P %{name} -u 40 -s /bin/false -c "Dkfilter User" -g dkfilter dkfilter
+
+%post
+/sbin/chkconfig --add dkfilter
+%service dkfilter restart
+
+%preun
+if [ "$1" = "0" ]; then
+        %service dkfilter stop
+        /sbin/chkconfig --del dkfilter
+fi
+
+%postun
+if [ "$1" = "0" ]; then
+        %userremove dkfilter
+fi
 
 %files
 %defattr(644,root,root,755)
@@ -91,4 +116,5 @@ rm -rf $RPM_BUILD_ROOT
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/dkfilter
 %attr(750,root,dkfilter) %dir %{_sysconfdir}
 %attr(750,root,dkfilter) %dir %{_sysconfdir}/ssl
+%attr(640,root,dkfilter) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/ssl/private1.key
 %attr(640,root,dkfilter) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}.out.conf
