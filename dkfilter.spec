@@ -31,7 +31,6 @@ Requires(post,preun):	/sbin/chkconfig
 %if 0
 Requires(postun):	/usr/sbin/userdel
 Requires(pre):	/bin/id
-Requires(pre):	/bin/id
 Requires(pre):	/usr/sbin/useradd
 Provides:	user(dkfilter)
 %endif
