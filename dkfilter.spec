@@ -4,7 +4,7 @@
 #
 %include	/usr/lib/rpm/macros.perl
 Summary:	dkfilter - an SMTP-proxy designed for Postfix
-Summary(pl.UTF-8):   dkfilter - proxy SMTP zaprojektowane dla Postfiksa
+Summary(pl.UTF-8):	dkfilter - proxy SMTP zaprojektowane dla Postfiksa
 Name:		dkfilter
 Version:	0.11
 Release:	0.9
