@@ -4,7 +4,7 @@
 #
 %include	/usr/lib/rpm/macros.perl
 Summary:	dkfilter - an SMTP-proxy designed for Postfix
-Summary(pl):	dkfilter - proxy SMTP zaprojektowane dla Postfiksa
+Summary(pl.UTF-8):   dkfilter - proxy SMTP zaprojektowane dla Postfiksa
 Name:		dkfilter
 Version:	0.11
 Release:	0.9
@@ -47,13 +47,13 @@ filters, an "outbound" filter for signing outgoing email, and an
 filters can operate as either Before-Queue or After-Queue Postfix
 content filters.
 
-%description -l pl
+%description -l pl.UTF-8
 dkfilter to proxy SMTP zaprojektowane dla Postfiksa. Implementuje
-podpisywanie i weryfikacjê wiadomo¶ci DomainKeys. Zawiera dwa
-oddzielne filtry, filtr "outbound" do podpisywania poczty wychodz±cej
-oraz filtr "inbound" do weryfikacji podpisów poczty przychodz±cej.
-Filtry mog± pracowaæ w filtrach zawarto¶ci Postfiksa Before-Queue
-(przed kolejk±) lub After-Queue (za kolejk±).
+podpisywanie i weryfikacjÄ™ wiadomoÅ›ci DomainKeys. Zawiera dwa
+oddzielne filtry, filtr "outbound" do podpisywania poczty wychodzÄ…cej
+oraz filtr "inbound" do weryfikacji podpisÃ³w poczty przychodzÄ…cej.
+Filtry mogÄ… pracowaÄ‡ w filtrach zawartoÅ›ci Postfiksa Before-Queue
+(przed kolejkÄ…) lub After-Queue (za kolejkÄ…).
 
 %prep
 %setup -q
