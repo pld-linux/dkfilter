@@ -2,7 +2,6 @@
 # - chkconfig pre post
 # - user[add|del] dkfilter
 #
-%include	/usr/lib/rpm/macros.perl
 Summary:	dkfilter - an SMTP-proxy designed for Postfix
 Summary(pl.UTF-8):	dkfilter - proxy SMTP zaprojektowane dla Postfiksa
 Name:		dkfilter
